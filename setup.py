@@ -7,5 +7,5 @@ setup(name='trading_engine',
       author='Sedigheh Farasat',
       author_email='sd.farasat@gmail.com',
       packages=['trading_engine'],
-      install_requires=[],
+      install_requires=['numpy', 'pandas',],
       )
