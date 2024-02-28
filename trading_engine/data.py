@@ -67,6 +67,7 @@ class DataHandler(object):
         raise NotImplementedError("Should implement update_bars()")
 
 
+# TODO: Adjusting the prices
 class HistoricCSVDataHandler(DataHandler):
     """
     HistoricCSVDataHandler is designed to read CSV files for each requested symbol from disk and provide an interface
