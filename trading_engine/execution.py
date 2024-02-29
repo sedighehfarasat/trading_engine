@@ -4,7 +4,7 @@ try:
 except ImportError:
     import queue
 from abc import ABCMeta, abstractmethod
-from event import FillEvent
+from trading_engine.event import FillEvent
 
 
 class ExecutionHandler(object):
