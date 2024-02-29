@@ -18,7 +18,7 @@ class Backtest(object):
         csv_dir - The hard root to the CSV data directory.
         symbol_list - The list of symbol strings.
         initial_capital - The starting capital for the portfolio.
-        heartbeat - Backtest "heartbeat" in seconds
+        heartbeat - Backtest "heartbeat" in seconds. For live daily trading, it is 24*60*60.
         start_date - The start datetime of the strategy.
         data_handler - (Class) Handles the market data feed.
         execution_handler - (Class) Handles the orders/fills for trades.
@@ -39,7 +39,7 @@ class Backtest(object):
         self.signals = 0
         self.orders = 0
         self.fills = 0
-        self.num_strats = 1
+        # self.num_strats = 1
         self._generate_trading_instances()
 
     def _generate_trading_instances(self):
@@ -72,14 +72,14 @@ class Backtest(object):
             # Handle the events
             while True:
                 try:
-                    event = self.events.get(False)
+                    event = self.events.get(block=False)
                 except queue.Empty:
                     break
                 else:
                     if event is not None:
                         if event.type == 'MARKET':
-                            self.strategy.calculate_signals(event)
-                            self.portfolio.update_timeindex(event)
+                            self.strategy.calculate_signals()
+                            self.portfolio.update_timeindex()
                         elif event.type == 'SIGNAL':
                             self.signals += 1
                             self.portfolio.update_signal(event)
@@ -100,8 +100,6 @@ class Backtest(object):
         self.portfolio.create_equity_curve_dataframe()
         print("Creating summary stats...")
         stats = self.portfolio.output_summary_stats()
-        print("Creating equity curve...")
-        print(self.portfolio.equity_curve.tail(10))
         pprint.pprint(stats)
         print("Signals: %s" % self.signals)
         print("Orders: %s" % self.orders)
