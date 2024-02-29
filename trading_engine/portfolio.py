@@ -158,7 +158,7 @@ class Portfolio(object):
 
         order = None
         symbol = signal.symbol
-        direction = signal.signal_type
+        direction = signal.direction
         mkt_quantity = 100
         cur_quantity = self.current_positions[symbol]
         order_type = 'MKT'
@@ -175,9 +175,9 @@ class Portfolio(object):
         Acts on a SignalEvent to generate new orders based on the portfolio logic.
         """
 
-        if event.type == 'SIGNAL':
-            order_event = self.generate_naive_order(event)
-            self.events.put(order_event)
+        # if event.type == 'SIGNAL':
+        order_event = self.generate_naive_order(event)
+        self.events.put(order_event)
 
     def create_equity_curve_dataframe(self):
         """
@@ -196,15 +196,20 @@ class Portfolio(object):
         """
 
         total_return = self.equity_curve['equity_curve'][-1]
+
         returns = self.equity_curve['returns']
+        daily_risk_free_rate = 0.25 / 252
+        sharpe_ratio = create_sharpe_ratio(returns-daily_risk_free_rate, periods=252)
+
         pnl = self.equity_curve['equity_curve']
-        sharpe_ratio = create_sharpe_ratio(returns, periods=252 * 60 * 6.5)
         drawdown, max_dd, dd_duration = create_drawdown(pnl)
         self.equity_curve['drawdown'] = drawdown
-        stats = [("Total Return", "%0.2f%%" % (total_return - 1.0) * 100),
-                 ("Sharpe Ratio", "%0.2f" % sharpe_ratio),
-                 ("Max Drawdown", "%0.2f%%" % (max_dd * 100.0)),
+
+        stats = [("Total Return", (total_return - 1.0) * 100),
+                 ("Annualized Sharpe Ratio", sharpe_ratio),
+                 ("Max Drawdown", (max_dd * 100.0)),
                  ("Drawdown Duration", "%d" % dd_duration)]
+
         self.equity_curve.to_csv('equity.csv')
 
         return stats
