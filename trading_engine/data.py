@@ -67,11 +67,10 @@ class DataHandler(object):
         raise NotImplementedError("Should implement update_bars()")
 
 
-# TODO: Adjusting the prices
-class HistoricCSVDataHandler(DataHandler):
+class TsetmcHistoricCSVDataHandler(DataHandler):
     """
-    HistoricCSVDataHandler is designed to read CSV files for each requested symbol from disk and provide an interface
-    to obtain the "latest" bar in a manner identical to a live trading interface.
+    TsetmcHistoricCSVDataHandler is designed to read CSV files downloaded from tsetmc.com for each requested symbol
+    from disk and provide an interface to obtain the "latest" bar in a manner identical to a live trading interface.
     """
 
     def __init__(self, events, csv_dir, symbol_list):
@@ -90,14 +89,15 @@ class HistoricCSVDataHandler(DataHandler):
         self.symbol_data = {}
         self.latest_symbol_data = {}
         self.continue_backtest = True
-        self._open_convert_csv_files()
+        self._open_csv_files()
+        self._adjust_prices()
+        self._reindex()
 
-    def _open_convert_csv_files(self):
+    def _open_csv_files(self):
         """
         Opens the CSV files from the data directory, converting them into pandas DataFrames within a symbol dictionary.
         """
 
-        comb_index = None
         for s in self.symbol_list:
             self.symbol_data[s] = pd.read_csv(
                 os.path.join(self.csv_dir, f'{s}.csv'),
@@ -107,12 +107,44 @@ class HistoricCSVDataHandler(DataHandler):
                 parse_dates=True,
                 names=['date', 'open', 'high', 'low', 'close', 'value', 'volume', 'oi', 'yesterday', 'last']
             ).sort_index()
-            # Combine the index to pad forward values
+
+    def _adjust_prices(self):
+        """
+        Adjusts closing price using yesterday price.
+        """
+
+        for s in self.symbol_list:
+            # Times we have capital raising or DPS distribution
+            adj_index = []
+            i = 0
+            while i < len(self.symbol_data[s]['close']) - 1:
+                if self.symbol_data[s]['close'][i] != self.symbol_data[s]['yesterday'][i + 1]:
+                    adj_index.append(self.symbol_data[s].index[i + 1])
+                i += 1
+            # Adjustment rate
+            adj_rates = []
+            for i in adj_index:
+                adj_rates.append(
+                    self.symbol_data[s]['yesterday'][i] / self.symbol_data[s]['close'].shift()[i])
+            # Adjusting
+            self.symbol_data[s]['adj_close'] = self.symbol_data[s]['close']
+            for i in range(len(adj_index)):
+                self.symbol_data[s]['adj_close'].loc[:adj_index[i]] = (
+                        self.symbol_data[s]['adj_close'].loc[:adj_index[i]] * adj_rates[i])
+
+    def _reindex(self):
+        """
+        Reindex the dataframes when there are multi symbols traded in different dates.
+        """
+
+        # Combine the index to pad forward values
+        comb_index = None
+        for s in self.symbol_list:
             if comb_index is None:
                 comb_index = self.symbol_data[s].index
             else:
                 comb_index.union(self.symbol_data[s].index)
-            # Set the latest symbol_data to None
+
             self.latest_symbol_data[s] = []
 
         # Reindex the dataframes
