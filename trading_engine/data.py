@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import os
 import pandas as pd
@@ -129,8 +131,8 @@ class TsetmcHistoricCSVDataHandler(DataHandler):
             # Adjusting
             self.symbol_data[s]['adj_close'] = self.symbol_data[s]['close']
             for i in range(len(adj_index)):
-                self.symbol_data[s]['adj_close'].loc[:adj_index[i]] = (
-                        self.symbol_data[s]['adj_close'].loc[:adj_index[i]] * adj_rates[i])
+                self.symbol_data[s].loc[: adj_index[i],  ['adj_close']] = (
+                        self.symbol_data[s]['adj_close'][: adj_index[i]] * adj_rates[i])
 
     def _reindex(self):
         """

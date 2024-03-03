@@ -12,7 +12,7 @@ class Portfolio(object):
     time-index, as well as the percentage change in portfolio total across bars.
     """
 
-    def __init__(self, bars, events, start_date, initial_capital=100000.0):
+    def __init__(self, bars, events, initial_capital=100000.0):
         """
         Initialises the portfolio with bars and an event queue.
         Also includes a starting datetime index and initial capital.
@@ -23,42 +23,42 @@ class Portfolio(object):
         initial_capital - The starting capital.
         """
 
-        self.equity_curve = None
         self.bars = bars
         self.events = events
         self.symbol_list = self.bars.symbol_list
-        self.start_date = start_date
+        # self.start_date = start_date
         self.initial_capital = initial_capital
-        self.all_positions = self.construct_all_positions()
+        self.all_positions = [] #self.construct_all_positions()
         self.current_positions = dict((k, v) for k, v in [(s, 0) for s in self.symbol_list])
-        self.all_holdings = self.construct_all_holdings()
+        self.all_holdings = [] #self.construct_all_holdings()
         self.current_holdings = self.construct_current_holdings()
+        self.equity_curve = None
 
-    def construct_all_positions(self):
-        """
-        Constructs the positions list using the start_date to determine when the time index will begin.
-        This stores a list of all previous positions recorded at the timestamp of a market data event.
-        A position is simply the quantity of the asset held. Negative positions mean the asset has been shorted.
-        """
+    # def construct_all_positions(self):
+    #     """
+    #     Constructs the positions list using the start_date to determine when the time index will begin.
+    #     This stores a list of all previous positions recorded at the timestamp of a market data event.
+    #     A position is simply the quantity of the asset held. Negative positions mean the asset has been shorted.
+    #     """
+    #
+    #     d = dict((k, v) for k, v in [(s, 0) for s in self.symbol_list])
+    #     d['datetime'] = self.start_date
+    #
+    #     return [d]
 
-        d = dict((k, v) for k, v in [(s, 0) for s in self.symbol_list])
-        d['datetime'] = self.start_date
-
-        return [d]
-
-    def construct_all_holdings(self):
-        """
-        Constructs the holdings list using the start_date to determine when the time index will begin.
-        This describes the market value of all positions held.
-        """
-
-        d = dict((k, v) for k, v in [(s, 0.0) for s in self.symbol_list])
-        d['datetime'] = self.start_date
-        d['cash'] = self.initial_capital
-        d['commission'] = 0.0
-        d['total'] = self.initial_capital
-
-        return [d]
+    # def construct_all_holdings(self):
+    #     """
+    #     Constructs the holdings list using the start_date to determine when the time index will begin.
+    #     This describes the market value of all positions held.
+    #     """
+    #
+    #     d = dict((k, v) for k, v in [(s, 0.0) for s in self.symbol_list])
+    #     d['datetime'] = self.start_date
+    #     d['cash'] = self.initial_capital
+    #     d['commission'] = 0.0
+    #     d['total'] = self.initial_capital
+    #
+    #     return [d]
 
     def construct_current_holdings(self):
         """
@@ -143,9 +143,9 @@ class Portfolio(object):
         Updates the portfolio current positions and holdings from a FillEvent.
         """
 
-        if event.type == 'FILL':
-            self.update_positions_from_fill(event)
-            self.update_holdings_from_fill(event)
+        # if event.type == 'FILL':
+        self.update_positions_from_fill(event)
+        self.update_holdings_from_fill(event)
 
     def generate_naive_order(self, signal):
         """
@@ -196,19 +196,21 @@ class Portfolio(object):
         """
 
         total_return = self.equity_curve['equity_curve'][-1]
+        total_value = self.equity_curve['total'][-1]
 
         returns = self.equity_curve['returns']
         daily_risk_free_rate = 0.25 / 252
-        sharpe_ratio = create_sharpe_ratio(returns-daily_risk_free_rate, periods=252)
+        sharpe_ratio = create_sharpe_ratio(returns - daily_risk_free_rate, periods=252)
 
         pnl = self.equity_curve['equity_curve']
         drawdown, max_dd, dd_duration = create_drawdown(pnl)
         self.equity_curve['drawdown'] = drawdown
 
-        stats = [("Total Return", (total_return - 1.0) * 100),
-                 ("Annualized Sharpe Ratio", sharpe_ratio),
-                 ("Max Drawdown", (max_dd * 100.0)),
-                 ("Drawdown Duration", "%d" % dd_duration)]
+        stats = [f"Portfolio Return: {total_return - 1.0: .2%}",
+                 f"Portfolio Value: {total_value: ,.0f}",
+                 f"Annualized Sharpe Ratio: {sharpe_ratio: .0f}",
+                 f"Max Drawdown: {max_dd: .2%}",
+                 f"Drawdown Duration: {dd_duration: .0f}"]
 
         self.equity_curve.to_csv('equity.csv')
 
