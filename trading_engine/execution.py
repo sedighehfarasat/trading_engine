@@ -1,8 +1,4 @@
 import datetime
-try:
-    import Queue as queue
-except ImportError:
-    import queue
 from abc import ABCMeta, abstractmethod
 from trading_engine.event import FillEvent
 
