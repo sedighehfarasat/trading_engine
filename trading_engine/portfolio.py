@@ -159,7 +159,7 @@ class Portfolio(object):
         order = None
         symbol = signal.symbol
         direction = signal.direction
-        mkt_quantity = 100
+        mkt_quantity = self.initial_capital / self.bars.get_latest_bar_value(symbol, 'adj_close')
         cur_quantity = self.current_positions[symbol]
         order_type = 'MKT'
 
