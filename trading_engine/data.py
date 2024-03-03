@@ -73,7 +73,7 @@ class TsetmcHistoricCSVDataHandler(DataHandler):
     from disk and provide an interface to obtain the "latest" bar in a manner identical to a live trading interface.
     """
 
-    def __init__(self, events, csv_dir, symbol_list):
+    def __init__(self, events, csv_dir, symbol_list, start_date):
         """
         Initialises the historic data handler by requesting the location of the CSV files and a list of symbols.
         It will be assumed that all files are of the form 'symbol.csv', where symbol is a string in the list.
@@ -86,6 +86,7 @@ class TsetmcHistoricCSVDataHandler(DataHandler):
         self.events = events
         self.csv_dir = csv_dir
         self.symbol_list = symbol_list
+        self.start_date = start_date
         self.symbol_data = {}
         self.latest_symbol_data = {}
         self.continue_backtest = True
@@ -107,6 +108,7 @@ class TsetmcHistoricCSVDataHandler(DataHandler):
                 parse_dates=True,
                 names=['date', 'open', 'high', 'low', 'close', 'value', 'volume', 'oi', 'yesterday', 'last']
             ).sort_index()
+            self.symbol_data[s].drop(self.symbol_data[s].loc[: self.start_date].index, inplace=True)
 
     def _adjust_prices(self):
         """
