@@ -1,6 +1,6 @@
 class Event(object):
     """
-    Event is base class providing an interface for all subsequent (inherited) events,
+    Event is a base class providing an interface for all subsequent (inherited) events,
     that will trigger further events in the trading infrastructure.
     """
 
@@ -41,31 +41,21 @@ class SignalEvent(Event):
 class OrderEvent(Event):
     """
     Handles the event of sending an Order to an execution system.
-    The order contains a symbol (e.g. GOOG), a type (market or limit), quantity and a direction.
+    The order contains a symbol, quantity and a direction.
     """
 
-    def __init__(self, symbol, order_type, quantity, direction):
+    def __init__(self, symbol, quantity, direction):
         """
         Parameters:
         symbol - The instrument to trade.
-        order_type - 'MKT' or 'LMT' for Market order or Limit order.
         quantity - Non-negative integer for quantity.
         direction - 'BUY' or 'SELL'.
         """
 
         self.type = 'ORDER'
         self.symbol = symbol
-        self.order_type = order_type
         self.quantity = quantity
         self.direction = direction
-
-    def print_order(self):
-        """
-        Outputs the values within the Order.
-        """
-
-        print("Order: Symbol=%s, Type=%s, Quantity=%s, Direction=%s" %
-              (self.symbol, self.order_type, self.quantity, self.direction))
 
 
 class FillEvent(Event):

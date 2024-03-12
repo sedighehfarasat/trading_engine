@@ -39,7 +39,6 @@ class Backtest(object):
         self.signals = 0
         self.orders = 0
         self.fills = 0
-        # self.num_strats = 1
         self._generate_trading_instances()
 
     def _generate_trading_instances(self):
